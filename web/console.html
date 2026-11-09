@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerityStream Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-elevated: #1f2937;
+      --border: #283548;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #0ea5e9;
+      --accent-hover: #0284c7;
+      --accent-soft: rgba(14, 165, 233, 0.15);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 290px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 16px;
+      box-shadow: 0 0 16px rgba(14, 165, 233, 0.35);
+    }
+
+    .brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+
+    .badge-v {
+      font-size: 11px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-family: var(--mono);
+    }
+
+    .user-profile {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .user-profile label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .input-field {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent);
+    }
+
+    .rooms-nav {
+      flex: 1;
+      padding: 14px 12px;
+      overflow-y: auto;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 0 8px 8px 8px;
+    }
+
+    .room-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+      transition: all 0.15s;
+    }
+
+    .room-item:hover {
+      background: var(--surface-elevated);
+      color: var(--text);
+    }
+
+    .room-item.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .connection-status {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--error);
+      box-shadow: 0 0 8px var(--error);
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* Main Area */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      position: relative;
+    }
+
+    .top-bar {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .room-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .room-header span {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .protocol-toggle {
+      display: flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .proto-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .proto-btn.active {
+      background: var(--surface-elevated);
+      color: var(--accent);
+    }
+
+    /* Messages Stream */
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      max-width: 85%;
+      position: relative;
+    }
+
+    .msg-card.own {
+      align-self: flex-end;
+      background: #142236;
+      border-color: #1e3a5f;
+    }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .msg-sender {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .msg-body {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    /* Token Streaming Message */
+    .stream-card {
+      background: #0d1522;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      color: #7dd3fc;
+      align-self: stretch;
+      max-width: 100%;
+    }
+
+    .stream-header {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+
+    .stream-cursor {
+      display: inline-block;
+      width: 7px;
+      height: 14px;
+      background: var(--accent);
+      margin-left: 4px;
+      animation: blink 1s infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* File Share Card */
+    .file-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 6px;
+    }
+
+    .file-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--accent-soft);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .file-meta {
+      flex: 1;
+    }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .file-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .download-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    /* Input Bar */
+    .composer {
+      padding: 16px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .composer-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .composer-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--sans);
+      outline: none;
+      resize: none;
+      height: 44px;
+      line-height: 1.4;
+      transition: border-color 0.15s;
+    }
+
+    .composer-input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:hover { background: var(--accent-hover); }
+
+    .btn-secondary {
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #2b394d;
+    }
+
+    .upload-progress-container {
+      display: none;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">VS</div>
+      <div>
+        <h1>VerityStream</h1>
+      </div>
+      <span class="badge-v">v0.1.0</span>
+    </div>
+
+    <div class="user-profile">
+      <label>Your Identity</label>
+      <input type="text" id="username" class="input-field" value="developer" placeholder="Username"/>
+      <input type="text" id="roomInput" class="input-field" value="deploy-42" placeholder="Room ID"/>
+      <button class="btn btn-secondary" onclick="reconnect()" style="height: 34px; font-size: 12px;">Switch Room</button>
+    </div>
+
+    <div class="rooms-nav">
+      <div class="section-title">Rooms Preset</div>
+      <div class="room-item active" onclick="switchRoom('deploy-42')"># deploy-42 (Logs/AI)</div>
+      <div class="room-item" onclick="switchRoom('general')"># general (Chat)</div>
+      <div class="room-item" onclick="switchRoom('dev-team')"># dev-team</div>
+      <div class="room-item" onclick="switchRoom('qa-artifacts')"># qa-artifacts</div>
+    </div>
+
+    <div class="connection-status">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </aside>
+
+  <!-- Main View -->
+  <main class="main">
+    <div class="top-bar">
+      <div class="room-header">
+        <h2 id="roomTitle"># deploy-42</h2>
+        <span>Real-time Chat, AI Token Streaming & File Sharing</span>
+      </div>
+      <div class="protocol-toggle">
+        <button id="btnWs" class="proto-btn active" onclick="setProtocol('ws')">WebSocket</button>
+        <button id="btnSse" class="proto-btn" onclick="setProtocol('sse')">SSE (Read-Only)</button>
+      </div>
+    </div>
+
+    <!-- Message stream area -->
+    <div id="messages" class="messages-container"></div>
+
+    <!-- Upload Progress -->
+    <div id="uploadProgress" class="upload-progress-container" style="margin: 0 24px;">
+      <div id="uploadStatus">Uploading chunk...</div>
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+
+    <!-- Input Composer -->
+    <div class="composer">
+      <div class="composer-row">
+        <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+        <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()" title="Chunked File Upload">
+          📎 Attach File
+        </button>
+        <button class="btn btn-secondary" onclick="simulateTokenStream()" title="Simulate AI LLM / Deploy Log stream">
+          ⚡ Simulate Stream
+        </button>
+        <textarea id="composerInput" class="composer-input" placeholder="Type a message or drop files... (Enter to send)" onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendChatMessage(); }"></textarea>
+        <button class="btn" onclick="sendChatMessage()">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let ws = null;
+    let sseSource = null;
+    let currentProtocol = 'ws';
+    let currentRoom = 'deploy-42';
+    let activeStreams = {}; // streamID -> DOMElement
+
+    function getIdentity() {
+      const user = document.getElementById('username').value.trim() || 'user_' + Math.floor(Math.random()*1000);
+      return { user, name: user };
+    }
+
+    function switchRoom(room) {
+      document.querySelectorAll('.room-item').forEach(el => {
+        el.classList.toggle('active', el.textContent.includes(room));
+      });
+      document.getElementById('roomInput').value = room;
+      reconnect();
+    }
+
+    function setProtocol(proto) {
+      currentProtocol = proto;
+      document.getElementById('btnWs').classList.toggle('active', proto === 'ws');
+      document.getElementById('btnSse').classList.toggle('active', proto === 'sse');
+      reconnect();
+    }
+
+    function updateStatus(connected, text) {
+      const dot = document.getElementById('statusDot');
+      const label = document.getElementById('statusText');
+      dot.className = 'status-dot' + (connected ? ' connected' : '');
+      label.textContent = text;
+    }
+
+    function reconnect() {
+      currentRoom = document.getElementById('roomInput').value.trim() || 'general';
+      document.getElementById('roomTitle').textContent = '#' + currentRoom;
+      document.getElementById('messages').innerHTML = '';
+      activeStreams = {};
+
+      if (ws) { ws.close(); ws = null; }
+      if (sseSource) { sseSource.close(); sseSource = null; }
+
+      const ident = getIdentity();
+      const host = window.location.host;
+
+      if (currentProtocol === 'ws') {
+        const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + host + '/ws?room=' + encodeURIComponent(currentRoom) + '&user=' + encodeURIComponent(ident.user) + '&name=' + encodeURIComponent(ident.name);
+        ws = new WebSocket(url);
+
+        ws.onopen = () => updateStatus(true, 'WS: ' + ident.user);
+        ws.onclose = () => updateStatus(false, 'Disconnected');
+        ws.onerror = () => updateStatus(false, 'Error');
+        ws.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            handleIncomingMessage(msg);
+          } catch(err) {
+            console.error('Invalid JSON message', e.data);
+          }
+        };
+      } else {
+        const url = '/sse?room=' + encodeURIComponent(currentRoom) + '&user=' + encodeURIComponent(ident.user);
+        sseSource = new EventSource(url);
+        sseSource.onopen = () => updateStatus(true, 'SSE: ' + ident.user);
+        sseSource.onerror = () => updateStatus(false, 'SSE Offline');
+        
+        ['text', 'stream_token', 'stream_end', 'file_share', 'presence'].forEach(eventType => {
+          sseSource.addEventListener(eventType, (e) => {
+            try {
+              const msg = JSON.parse(e.data);
+              handleIncomingMessage(msg);
+            } catch(err) {
+              console.error(err);
+            }
+          });
+        });
+      }
+    }
+
+    function handleIncomingMessage(msg) {
+      const container = document.getElementById('messages');
+      const currentUsername = document.getElementById('username').value.trim();
+
+      if (msg.type === 'text') {
+        const isOwn = msg.sender_id === currentUsername;
+        const card = document.createElement('div');
+        card.className = 'msg-card' + (isOwn ? ' own' : '');
+        
+        let textContent = msg.payload;
+        if (typeof textContent === 'object') {
+          textContent = JSON.stringify(textContent);
+        } else if (typeof textContent === 'string' && textContent.startsWith('"') && textContent.endsWith('"')) {
+          textContent = JSON.parse(textContent);
+        }
+
+        const time = new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        card.innerHTML = `
+          <div class="msg-header">
+            <span class="msg-sender">${escapeHtml(msg.sender_name || msg.sender_id || 'Unknown')}</span>
+            <span class="msg-time">${time}</span>
+          </div>
+          <div class="msg-body">${escapeHtml(textContent)}</div>
+        `;
+        container.appendChild(card);
+      } else if (msg.type === 'stream_token' || msg.type === 'stream_end') {
+        const payload = typeof msg.payload === 'string' ? JSON.parse(msg.payload) : msg.payload;
+        const streamID = payload.stream_id || 'default_stream';
+
+        let streamEl = activeStreams[streamID];
+        if (!streamEl) {
+          streamEl = document.createElement('div');
+          streamEl.className = 'stream-card';
+          streamEl.innerHTML = `
+            <div class="stream-header">
+              <span>STREAM: ${escapeHtml(streamID)} (from ${escapeHtml(msg.sender_id)})</span>
+              <span id="badge-${streamID}" style="color: var(--accent);">● LIVE</span>
+            </div>
+            <div class="stream-content" id="content-${streamID}"></div>
+          `;
+          container.appendChild(streamEl);
+          activeStreams[streamID] = streamEl;
+        }
+
+        const contentBox = document.getElementById('content-' + streamID);
+        if (payload.chunk) {
+          contentBox.textContent += payload.chunk;
+        }
+
+        if (msg.type === 'stream_end' || payload.done) {
+          const badge = document.getElementById('badge-' + streamID);
+          if (badge) {
+            badge.textContent = '✓ FINISHED';
+            badge.style.color = 'var(--success)';
+          }
+        }
+      } else if (msg.type === 'file_share') {
+        const meta = typeof msg.payload === 'string' ? JSON.parse(msg.payload) : msg.payload;
+        const card = document.createElement('div');
+        card.className = 'msg-card';
+        const sizeFormatted = (meta.size / 1024).toFixed(1) + ' KB';
+        card.innerHTML = `
+          <div class="msg-header">
+            <span class="msg-sender">${escapeHtml(msg.sender_id || 'Uploader')} shared a file</span>
+            <span class="msg-time">${new Date(msg.created_at).toLocaleTimeString()}</span>
+          </div>
+          <div class="file-card">
+            <div class="file-icon">FILE</div>
+            <div class="file-meta">
+              <div class="file-name">${escapeHtml(meta.file_name)}</div>
+              <div class="file-sub">${sizeFormatted} • SHA: ${(meta.sha256 || '').slice(0, 10)}...</div>
+            </div>
+            <a href="/api/files/download?file_id=${encodeURIComponent(meta.id)}" class="download-btn" target="_blank" download>Download</a>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('composerInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert('WebSocket is not connected. SSE is read-only. Switch to WebSocket to post.');
+        return;
+      }
+
+      const ident = getIdentity();
+      const msg = {
+        room_id: currentRoom,
+        sender_id: ident.user,
+        sender_name: ident.name,
+        type: 'text',
+        payload: val,
+        created_at: new Date().toISOString()
+      };
+
+      ws.send(JSON.stringify(msg));
+      input.value = '';
+    }
+
+    // Chunked File Upload Handler
+    async function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const progressContainer = document.getElementById('uploadProgress');
+      const progressBar = document.getElementById('progressBar');
+      const statusText = document.getElementById('uploadStatus');
+
+      progressContainer.style.display = 'block';
+      statusText.textContent = `Uploading ${file.name} in chunks...`;
+
+      const chunkSize = 256 * 1024; // 256 KB chunks for demo
+      const totalChunks = Math.ceil(file.size / chunkSize);
+      const uploadID = 'up_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, file.size);
+        const chunkBlob = file.slice(start, end);
+
+        const pct = Math.round(((i + 1) / totalChunks) * 100);
+        progressBar.style.width = pct + '%';
+        statusText.textContent = `Uploading chunk ${i + 1} of ${totalChunks} (${pct}%)...`;
+
+        const resp = await fetch(`/api/files/chunk?upload_id=${uploadID}&chunk_index=${i}`, {
+          method: 'POST',
+          body: chunkBlob
+        });
+
+        if (!resp.ok) {
+          alert('Chunk upload failed at index ' + i);
+          progressContainer.style.display = 'none';
+          return;
+        }
+      }
+
+      // Complete assembly
+      statusText.textContent = 'Assembling chunks and validating SHA-256...';
+      const ident = getIdentity();
+      const completeResp = await fetch('/api/files/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          upload_id: uploadID,
+          room_id: currentRoom,
+          uploader_id: ident.user,
+          file_name: file.name,
+          content_type: file.type || 'application/octet-stream',
+          total_chunks: totalChunks
+        })
+      });
+
+      if (completeResp.ok) {
+        statusText.textContent = 'Upload complete!';
+        setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
+      } else {
+        alert('File assembly failed!');
+        progressContainer.style.display = 'none';
+      }
+      e.target.value = '';
+    }
+
+    // Simulate AI Token Stream locally for verification
+    function simulateTokenStream() {
+      const streamID = 'llm-job-' + Math.floor(Math.random() * 1000);
+      const sampleTokens = [
+        "Analyzing repository structure...\n",
+        "Checking database schema migrations...\n",
+        "Optimizing Goroutines and channel backpressure...\n",
+        "VerityStream pipeline ready: 100% tokens delivered successfully."
+      ];
+
+      sampleTokens.forEach((token, idx) => {
+        setTimeout(() => {
+          const isLast = idx === sampleTokens.length - 1;
+          handleIncomingMessage({
+            room_id: currentRoom,
+            sender_id: 'ai-copilot',
+            type: isLast ? 'stream_end' : 'stream_token',
+            payload: {
+              stream_id: streamID,
+              index: idx,
+              chunk: token,
+              done: isLast
+            }
+          });
+        }, (idx + 1) * 350);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initialize connection on load
+    window.onload = reconnect;
+  </script>
+</body>
+</html>

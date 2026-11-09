@@ -199,19 +199,7 @@ func (h *Hub) Shutdown(ctx context.Context) error {
 		client.Close()
 	}
 
-	// Wait for goroutines with timeout
-	done := make(chan struct{})
-	go func() {
-		h.wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-done:
-		return nil
-	}
+	return nil
 }
 
 // Publish enqueues a message to be broadcasted to its room.

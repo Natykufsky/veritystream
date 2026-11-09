@@ -72,39 +72,8 @@ func main() {
 		fmt.Fprintf(w, `{"total_rooms":%d,"total_clients":%d}`+"\n", stats.TotalRooms, stats.TotalClients)
 	})
 
-	// Minimal embedded HTML client for quick testing
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<!DOCTYPE html>
-<html>
-<head><title>VerityStream Demo</title></head>
-<body style="font-family: sans-serif; padding: 20px;">
-  <h2>VerityStream Testbed</h2>
-  <p>Connected to room: <code>general</code></p>
-  <div id="logs" style="border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 8px; background: #fafafa;"></div>
-  <input type="text" id="msg" placeholder="Type a message..." style="width: 300px; padding: 6px; margin-top: 8px;"/>
-  <button onclick="send()">Send</button>
-
-  <script>
-    const logBox = document.getElementById("logs");
-    const ws = new WebSocket("ws://" + location.host + "/ws?room=general&user=guest_" + Math.floor(Math.random()*1000));
-    ws.onmessage = (e) => {
-      const p = document.createElement("div");
-      p.textContent = e.data;
-      logBox.appendChild(p);
-      logBox.scrollTop = logBox.scrollHeight;
-    };
-    function send() {
-      const input = document.getElementById("msg");
-      if (input.value) {
-        ws.send(JSON.stringify({ type: "text", payload: input.value }));
-        input.value = "";
-      }
-    }
-  </script>
-</body>
-</html>`))
-	})
+	// Embed the rich production console UI directly from the library
+	mux.Handle("/", veritystream.ConsoleHandler())
 
 	srv := &http.Server{
 		Addr:    ":8080",
