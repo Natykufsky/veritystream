@@ -278,12 +278,6 @@ func (c *Client) Close() {
 		c.isClosed.Store(true)
 		close(c.closed)
 		if c.ws != nil {
-			// Send standard normal closure frame
-			_ = c.ws.WriteControl(
-				websocket.CloseMessage,
-				websocket.FormatCloseMessage(websocket.CloseNormalClosure, "connection closed"),
-				time.Now().Add(time.Second),
-			)
 			_ = c.ws.Close()
 		}
 	})
