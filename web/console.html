@@ -9,20 +9,49 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --surface: #111827;
-      --surface-elevated: #1f2937;
-      --border: #283548;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --accent: #0ea5e9;
-      --accent-hover: #0284c7;
-      --accent-soft: rgba(14, 165, 233, 0.15);
-      --success: #10b981;
-      --warning: #f59e0b;
-      --error: #ef4444;
-      --mono: 'JetBrains Mono', monospace;
-      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+      /* Host application token cascade (Tailwind / Shadcn / Material / Custom), falling back to Verity defaults */
+      --bg: var(--background, var(--vs-bg, #090d16));
+      --surface: var(--card, var(--surface, var(--vs-surface, #111827)));
+      --surface-elevated: var(--popover, var(--surface-elevated, var(--vs-surface-elevated, #1f2937)));
+      --border: var(--border, var(--vs-border, #283548));
+      --text: var(--foreground, var(--vs-text, #f3f4f6));
+      --text-muted: var(--muted-foreground, var(--vs-text-muted, #9ca3af));
+      --accent: var(--primary, var(--accent-color, var(--vs-accent, #0ea5e9)));
+      --accent-hover: var(--primary-hover, var(--vs-accent-hover, #0284c7));
+      --accent-soft: var(--primary-soft, rgba(14, 165, 233, 0.15));
+      --success: var(--success, #10b981);
+      --warning: var(--warning, #f59e0b);
+      --error: var(--destructive, var(--error, #ef4444));
+      --mono: var(--font-mono, 'JetBrains Mono', monospace);
+      --sans: var(--font-sans, 'Inter', system-ui, -apple-system, sans-serif);
+      --radius: var(--radius, 8px);
+    }
+
+    /* Light mode adaptive tokens (when explicitly set via class or system preference) */
+    :root.light {
+      --bg: var(--background, #f8fafc);
+      --surface: var(--card, #ffffff);
+      --surface-elevated: var(--popover, #f1f5f9);
+      --border: var(--border, #e2e8f0);
+      --text: var(--foreground, #0f172a);
+      --text-muted: var(--muted-foreground, #64748b);
+      --accent: var(--primary, #0284c7);
+      --accent-hover: var(--primary-hover, #0369a1);
+      --accent-soft: rgba(2, 132, 199, 0.12);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root:not(.dark) {
+        --bg: var(--background, #f8fafc);
+        --surface: var(--card, #ffffff);
+        --surface-elevated: var(--popover, #f1f5f9);
+        --border: var(--border, #e2e8f0);
+        --text: var(--foreground, #0f172a);
+        --text-muted: var(--muted-foreground, #64748b);
+        --accent: var(--primary, #0284c7);
+        --accent-hover: var(--primary-hover, #0369a1);
+        --accent-soft: rgba(2, 132, 199, 0.12);
+      }
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -818,6 +847,28 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
+
+    // Listen for theme sync events when embedded in host applications (iframe or webview)
+    window.addEventListener('message', (event) => {
+      if (!event.data) return;
+      if (event.data.type === 'SET_THEME' || event.data.type === 'THEME_CHANGE') {
+        const theme = event.data.theme; // 'light', 'dark', or 'system'
+        if (theme === 'light') {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        } else if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.remove('light', 'dark');
+        }
+      }
+      if (event.data.type === 'SET_VARIABLES' && typeof event.data.variables === 'object') {
+        for (const [k, v] of Object.entries(event.data.variables)) {
+          document.documentElement.style.setProperty(k, v);
+        }
+      }
+    });
 
     // Initialize connection on load
     window.onload = reconnect;
