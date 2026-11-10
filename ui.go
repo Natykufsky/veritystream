@@ -18,3 +18,4 @@ func ConsoleHandler() http.Handler {
 		_, _ = w.Write(defaultConsoleHTML)
 	})
 }
+

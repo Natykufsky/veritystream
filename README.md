@@ -2,7 +2,7 @@
 
 A high-performance, modular Go library for **real-time chat**, **log & LLM token streaming (SSE / WebSockets)**, and **chunked file sharing** with zero runtime bloat.
 
-Designed to be embedded into any Go backend service across the **Verity ecosystem** (`monakbanker-api`, `deployer-service`, `verity-cloud`, `go-apidocs`) or standalone microservices.
+Designed to be embedded into any Go backend service across the **Verity ecosystem** (`verity-cloud`, `go-apidocs`) or standalone microservices.
 
 ---
 
